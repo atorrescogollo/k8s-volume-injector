@@ -1,0 +1,25 @@
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: k8s-volume-injector
+webhooks:
+  - name: k8s-volume-injector.atorrescogollo.github.io
+    admissionReviewVersions:
+      - "v1beta1"
+    sideEffects: "None"
+    timeoutSeconds: 30
+    namespaceSelector:
+      matchLabels:
+        k8s-volume-injector: "true"
+    clientConfig:
+      service:
+        name: k8s-volume-injector
+        namespace: k8s-volume-injector
+        path: "/mutate"
+      caBundle: ___REDACTED___
+    rules:
+      - operations: [ "CREATE", "UPDATE" ]
+        apiGroups: [""]
+        apiVersions: ["v1"]
+        resources: ["pods"]

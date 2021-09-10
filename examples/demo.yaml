@@ -1,0 +1,22 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: k8s-volume-injector-demo
+  labels:
+    k8s-volume-injector: "true"
+spec: {}
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: testpod1
+  namespace: k8s-volume-injector-demo
+spec:
+  containers:
+    - name: web
+      image: nginx
+      ports:
+        - name: web
+          containerPort: 80
+          protocol: TCP
