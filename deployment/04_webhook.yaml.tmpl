@@ -17,7 +17,7 @@ webhooks:
         name: k8s-volume-injector
         namespace: k8s-volume-injector
         path: "/mutate"
-      caBundle: ___REDACTED___
+      caBundle: ___CA_BUNDLE___
     rules:
       - operations: [ "CREATE", "UPDATE" ]
         apiGroups: [""]

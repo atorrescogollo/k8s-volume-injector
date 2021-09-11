@@ -1,0 +1,21 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: k8s-volume-injector-config
+  namespace: k8s-volume-injector
+data:
+  config.yaml: |
+    http:
+      listenAddress: ":9443"
+      tls:
+        certfile: /certs/tls.crt
+        keyfile: /certs/tls.key
+    volumes:
+      - name: etc-ssl-certs
+        hostPath:
+          path: /etc/ssl/certs
+    volumeMounts:
+      - name: etc-ssl-certs
+        mountPath: /etc/ssl/certs
+        readOnly: true

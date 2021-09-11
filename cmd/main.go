@@ -112,7 +112,7 @@ func HandleMutate(w http.ResponseWriter, r *http.Request) {
 		log.Errorf("could not unmarshal pod on admission request: %v", err)
 		return
 	}
-	log.Infof("Processing Pod %v (Namespace=%v)...", pod.ObjectMeta.Name, pod.ObjectMeta.Namespace)
+	log.Infof("[Namespace=%v,Pod=%v] Processing...", pod.ObjectMeta.Namespace, pod.ObjectMeta.Name)
 
 	podVolumes := pod.Spec.Volumes
 	//volumeType := v1.HostPathDirectory
@@ -128,7 +128,21 @@ func HandleMutate(w http.ResponseWriter, r *http.Request) {
 	//	},
 	//}
 	newVolumes := globalConfig.Volumes
-	podVolumes = append(podVolumes, newVolumes...)
+	for _, newv := range newVolumes {
+		found := false
+		for _, currv := range podVolumes {
+			if currv.Name == newv.Name {
+				found = true
+				break
+			}
+		}
+		if !found {
+			log.Infof("[Namespace=%v,Pod=%v] Appending podVolume=\"%v\"...", pod.ObjectMeta.Namespace, pod.ObjectMeta.Name, newv.Name)
+			podVolumes = append(podVolumes, newv)
+		} else {
+			log.Infof("[Namespace=%v,Pod=%v] podVolume=\"%v\" is already set. Skipping...", pod.ObjectMeta.Namespace, pod.ObjectMeta.Name, newv.Name)
+		}
+	}
 
 	//newVolumeMounts := []v1.VolumeMount{
 	//	{
@@ -140,7 +154,22 @@ func HandleMutate(w http.ResponseWriter, r *http.Request) {
 
 	newVolumeMounts := globalConfig.VolumeMounts
 	for i := range pod.Spec.Containers {
-		pod.Spec.Containers[i].VolumeMounts = append(pod.Spec.Containers[i].VolumeMounts, newVolumeMounts...)
+
+		for _, newvm := range newVolumeMounts {
+			found := false
+			for _, currvm := range pod.Spec.Containers[i].VolumeMounts {
+				if currvm.Name == newvm.Name {
+					found = true
+					break
+				}
+			}
+			if !found {
+				log.Infof("[Namespace=%v,Pod=%v] Appending containerVolumeMount=\"%v\"...", pod.ObjectMeta.Namespace, pod.ObjectMeta.Name, newvm.Name)
+				pod.Spec.Containers[i].VolumeMounts = append(pod.Spec.Containers[i].VolumeMounts, newvm)
+			} else {
+				log.Infof("[Namespace=%v,Pod=%v] containerVolumeMount=\"%v\" is already set. Skipping...", pod.ObjectMeta.Namespace, pod.ObjectMeta.Name, newvm.Name)
+			}
+		}
 	}
 
 	patches := []patchOperation{
@@ -174,6 +203,6 @@ func HandleMutate(w http.ResponseWriter, r *http.Request) {
 		log.Errorf("could not marshal admissionReviewResponse: %v", err)
 		return
 	}
-	log.Infof("Pod %v (Namespace=%v) patched!", pod.ObjectMeta.Name, pod.ObjectMeta.Namespace)
+	log.Infof("[Namespace=%v,Pod=%v] Finished!", pod.ObjectMeta.Namespace, pod.ObjectMeta.Name)
 	w.Write(bytes)
 }
